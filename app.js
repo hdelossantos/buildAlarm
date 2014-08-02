@@ -25,6 +25,35 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/', routes);
 app.use('/users', users);
 
+app.get('/alarm', function(req, res) {
+    var exec = require('child_process').exec, child;
+    var volume = req.query.vol ? req.query.vol : '100';
+
+    var cmd_base = 'mpg321 -g ' + volume + ' -o alsa ';
+    var cmd = cmd_base + '-l 3 res/tos-redalert.mp3';
+
+    if (req.query.alert == 'true') {
+        cmd += ' && ' + cmd_base + 'res/tos-intercom.mp3';
+    }
+
+    child = exec(cmd,
+        function(error, stdout, stderr) {
+            res.send(stdout);
+        }
+    );
+
+    if (req.query.msg) {
+	var command = 'echo "' + req.query.msg + '" | festival --tts';
+	child = exec(command,
+	   function(error, stdout, stderr) {
+	      res.send(stdout);
+	   }
+	);
+    }
+
+    res.send('SUCESS');
+});
+
 /// catch 404 and forward to error handler
 app.use(function(req, res, next) {
     var err = new Error('Not Found');
@@ -55,6 +84,5 @@ app.use(function(err, req, res, next) {
         error: {}
     });
 });
-
 
 module.exports = app;
